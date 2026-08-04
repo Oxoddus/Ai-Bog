@@ -27,6 +27,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [affiliateFilter, setAffiliateFilter] = useState<'All' | 'Shopee' | 'TikTok' | 'Tokopedia' | 'UbayHub'>('All');
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
 
   const categories = ['All', 'IC', 'LED Strip', 'Mainboard', 'Tools & Equipment', 'Arduino & ESP32 / IoT'];
@@ -39,7 +40,18 @@ export const ShopView: React.FC<ShopViewProps> = ({
 
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    let matchesAffiliate = true;
+    if (affiliateFilter === 'Shopee') {
+      matchesAffiliate = p.isAffiliate && p.affiliatePlatform === 'Shopee';
+    } else if (affiliateFilter === 'TikTok') {
+      matchesAffiliate = p.isAffiliate && p.affiliatePlatform === 'TikTok Shop';
+    } else if (affiliateFilter === 'Tokopedia') {
+      matchesAffiliate = p.isAffiliate && p.affiliatePlatform === 'Tokopedia';
+    } else if (affiliateFilter === 'UbayHub') {
+      matchesAffiliate = !p.isAffiliate;
+    }
+
+    return matchesSearch && matchesCategory && matchesAffiliate;
   });
 
   const handleAddCartLocal = (p: Product) => {
@@ -103,6 +115,63 @@ export const ShopView: React.FC<ShopViewProps> = ({
             </select>
           </div>
         </div>
+
+        {/* Affiliate Store Quick Tabs */}
+        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mr-1">
+            Official Store & Affiliate:
+          </span>
+          <button
+            onClick={() => setAffiliateFilter('All')}
+            className={`px-3 py-1.5 rounded-xl font-extrabold transition ${
+              affiliateFilter === 'All'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+            }`}
+          >
+            Semua Produk
+          </button>
+          <button
+            onClick={() => setAffiliateFilter('Shopee')}
+            className={`px-3 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 ${
+              affiliateFilter === 'Shopee'
+                ? 'bg-orange-600 text-white shadow'
+                : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 hover:bg-orange-500/20'
+            }`}
+          >
+            <span>🛍️ Shopee Affiliate</span>
+          </button>
+          <button
+            onClick={() => setAffiliateFilter('TikTok')}
+            className={`px-3 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 ${
+              affiliateFilter === 'TikTok'
+                ? 'bg-slate-950 text-white shadow ring-1 ring-white/20'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200'
+            }`}
+          >
+            <span>🎵 TikTok Shop Affiliate</span>
+          </button>
+          <button
+            onClick={() => setAffiliateFilter('Tokopedia')}
+            className={`px-3 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 ${
+              affiliateFilter === 'Tokopedia'
+                ? 'bg-emerald-600 text-white shadow'
+                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+            }`}
+          >
+            <span>🟢 Tokopedia Affiliate</span>
+          </button>
+          <button
+            onClick={() => setAffiliateFilter('UbayHub')}
+            className={`px-3 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 ${
+              affiliateFilter === 'UbayHub'
+                ? 'bg-amber-600 text-white shadow'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+            }`}
+          >
+            <span>🏬 Stok Toko UbayHub Direct</span>
+          </button>
+        </div>
       </div>
 
       {/* Products Grid */}
@@ -162,15 +231,34 @@ export const ShopView: React.FC<ShopViewProps> = ({
               {/* Affiliate Platform Buttons or Direct Buy */}
               <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800 space-y-2">
                 {p.isAffiliate && p.affiliateUrl ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-extrabold px-2 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                        {p.affiliatePlatform || 'Shopee'} Affiliate
+                      </span>
+                      {p.affiliateCommission && (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          Komisi: {p.affiliateCommission}
+                        </span>
+                      )}
+                    </div>
+
                     <a
                       href={p.affiliateUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow"
+                      className={`w-full py-2 px-3 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow transition ${
+                        p.affiliatePlatform === 'Shopee'
+                          ? 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700'
+                          : p.affiliatePlatform === 'TikTok Shop'
+                          ? 'bg-gradient-to-r from-slate-900 via-stone-900 to-slate-950 hover:from-slate-800 hover:to-stone-900 border border-slate-700'
+                          : p.affiliatePlatform === 'Tokopedia'
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600'
+                      }`}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Beli di {p.affiliatePlatform} (Affiliate)</span>
+                      <span>Beli di {p.affiliatePlatform || 'Shopee'}</span>
                     </a>
                   </div>
                 ) : null}

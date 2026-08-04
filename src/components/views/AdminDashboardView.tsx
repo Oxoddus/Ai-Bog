@@ -37,7 +37,8 @@ import {
   ShoppingBag,
   Percent,
   Copy,
-  Check
+  Check,
+  Printer
 } from 'lucide-react';
 
 interface AdminDashboardViewProps {
@@ -65,9 +66,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onUpdateServiceOrders,
   onUpdateAds
 }) => {
-  const [adminTab, setAdminTab] = useState<'overview' | 'stock' | 'services' | 'ads' | 'affiliate' | 'security'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'stock' | 'services' | 'ads' | 'firmware' | 'affiliate' | 'security'>('overview');
   const [stockSearch, setStockSearch] = useState('');
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [firmwareList, setFirmwareList] = useState<Firmware[]>(firmwares);
+
+  // New Firmware Modal
+  const [showAddFirmwareModal, setShowAddFirmwareModal] = useState(false);
+  const [newFwTitle, setNewFwTitle] = useState('');
+  const [newFwBrand, setNewFwBrand] = useState('Polytron');
+  const [newFwModel, setNewFwModel] = useState('');
+  const [newFwMainboard, setNewFwMainboard] = useState('');
+  const [newFwIcType, setNewFwIcType] = useState('GD25Q64 / 25Q32');
+  const [newFwSize, setNewFwSize] = useState('8.00 MB');
+  const [newFwUrl, setNewFwUrl] = useState('https://ubayhub.id/downloads/fw-test.bin');
 
   // Affiliate Mock Data State
   const [affiliateLinks, setAffiliateLinks] = useState([
@@ -302,13 +314,23 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </button>
 
         <button
+          onClick={() => setAdminTab('firmware')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'firmware' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <Download className="w-4 h-4 text-orange-400" />
+          <span>5. Kelola Firmware BIN ({firmwareList.length})</span>
+        </button>
+
+        <button
           onClick={() => setAdminTab('affiliate')}
           className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
             adminTab === 'affiliate' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
           }`}
         >
-          <DollarSign className="w-4 h-4 text-orange-400" />
-          <span>5. Affiliate Overview ({affiliateLinks.length})</span>
+          <DollarSign className="w-4 h-4 text-emerald-400" />
+          <span>6. Affiliate Overview ({affiliateLinks.length})</span>
         </button>
 
         <button
@@ -317,8 +339,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             adminTab === 'security' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
           }`}
         >
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>6. Keamanan & Log Audit</span>
+          <ShieldCheck className="w-4 h-4 text-purple-400" />
+          <span>7. Keamanan & Log Audit</span>
         </button>
       </div>
 
@@ -440,34 +462,53 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   <th className="p-3">Pelanggan & HP</th>
                   <th className="p-3">Perangkat / Merk</th>
                   <th className="p-3">Status Pengerjaan</th>
-                  <th className="p-3">Biaya</th>
-                  <th className="p-3">Aksi Ubah Status</th>
+                  <th className="p-3">Biaya & Payment</th>
+                  <th className="p-3">Aksi Ubah Status & Cetak Resi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {serviceOrders.map((ord) => (
                   <tr key={ord.id} className="hover:bg-slate-50 dark:hover:bg-slate-950">
-                    <td className="p-3 font-mono font-bold text-blue-600">{ord.code}</td>
+                    <td className="p-3 font-mono">
+                      <div className="font-bold text-blue-600">{ord.code}</div>
+                      <div className="text-[10px] text-slate-400">{ord.createdAt}</div>
+                    </td>
                     <td className="p-3">
                       <div className="font-bold">{ord.customerName}</div>
                       <div className="text-[10px] text-slate-400">{ord.phone} ({ord.city})</div>
                     </td>
                     <td className="p-3 font-bold">{ord.brandModel} ({ord.deviceType})</td>
                     <td className="p-3 font-bold text-orange-500">{ord.status}</td>
-                    <td className="p-3 font-extrabold">Rp {ord.estimatedCost.toLocaleString('id-ID')}</td>
+                    <td className="p-3 font-extrabold">
+                      <div>Rp {ord.estimatedCost.toLocaleString('id-ID')}</div>
+                      {ord.isCod && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-black">COD</span>}
+                    </td>
                     <td className="p-3">
-                      <select
-                        value={ord.status}
-                        onChange={(e: any) => handleUpdateServiceStatus(ord.id, e.target.value)}
-                        className="p-1.5 text-xs rounded bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold"
-                      >
-                        <option value="Diterima">Diterima</option>
-                        <option value="Pemeriksaan / Diagnosa">Pemeriksaan / Diagnosa</option>
-                        <option value="Menunggu Sparepart">Menunggu Sparepart</option>
-                        <option value="Dalam Pengerjaan">Dalam Pengerjaan</option>
-                        <option value="Testing & QC">Testing & QC</option>
-                        <option value="Selesai & Siap Ambil / Kirim">Selesai & Siap Ambil / Kirim</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={ord.status}
+                          onChange={(e: any) => handleUpdateServiceStatus(ord.id, e.target.value)}
+                          className="p-1.5 text-xs rounded bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold"
+                        >
+                          <option value="Diterima">Diterima</option>
+                          <option value="Pemeriksaan / Diagnosa">Pemeriksaan / Diagnosa</option>
+                          <option value="Menunggu Sparepart">Menunggu Sparepart</option>
+                          <option value="Dalam Pengerjaan">Dalam Pengerjaan</option>
+                          <option value="Testing & QC">Testing & QC</option>
+                          <option value="Selesai & Siap Ambil / Kirim">Selesai & Siap Ambil / Kirim</option>
+                        </select>
+                        <button
+                          onClick={() => {
+                            alert(`Mencetak Label Resi Pengiriman Servis: ${ord.code}\nPenerima: ${ord.customerName}\nAlamat: ${ord.address || ord.city}`);
+                            window.print();
+                          }}
+                          className="p-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1"
+                          title="Cetak Label Resi Pengiriman"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>Label</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -528,7 +569,120 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </div>
       )}
 
-      {/* Tab 5: Affiliate Overview Section */}
+      {/* Tab 5: Firmware BIN Management Section */}
+      {adminTab === 'firmware' && (
+        <div className="space-y-4 animate-fadeIn">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <Download className="w-4 h-4 text-orange-500" />
+                <span>Pusat Manajemen & Validator Firmware BIN (100% Tested)</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Tambah file dump SPI Flash, NAND Flash, dan atur ketersediaan firmware untuk komunitas teknisi.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                const title = prompt("Judul Firmware / Model TV:");
+                if (!title) return;
+                const brand = prompt("Merk (Polytron/LG/Samsung/Sharp/TCL/Receiver):") || "Polytron";
+                const model = prompt("Nomor Model (misal: PLD 32T1500):") || "PLD 32T1500";
+                const mainboard = prompt("Kode Mainboard / T-Con:") || "TP.MS338.PB801";
+                const icType = prompt("Jenis IC SPI/NAND Flash:") || "GD25Q64";
+
+                const newFw: Firmware = {
+                  uuid: 'fw-' + Date.now(),
+                  slug: 'fw-' + Date.now(),
+                  title,
+                  manufacturer: brand,
+                  model,
+                  mainboard,
+                  chipset: 'Realtek / MStar',
+                  ic: icType,
+                  resolution: '1366x768 / 1920x1080',
+                  fileSize: '8.00 MB',
+                  passwordZip: 'ubayhub2026',
+                  md5: 'a8f9c' + Math.floor(Math.random() * 100000),
+                  sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+                  downloadsCount: 0,
+                  viewsCount: 1,
+                  uploadDate: new Date().toISOString().split('T')[0],
+                  version: 'V1.0',
+                  status: 'Verified',
+                  mirrorServers: [
+                    { name: 'Server Primary Blora', url: 'https://ubayhub.id/downloads/fw-new.bin', status: 'Online' }
+                  ],
+                  tags: ['Firmware TV', brand, 'Tested 100%'],
+                  category: 'TV LED/LCD'
+                };
+
+                setFirmwareList([newFw, ...firmwareList]);
+              }}
+              className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Upload Firmware BIN Baru</span>
+            </button>
+          </div>
+
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold">
+                <tr>
+                  <th className="p-3">Model & Judul Firmware</th>
+                  <th className="p-3">Brand & IC</th>
+                  <th className="p-3">Kode Mainboard</th>
+                  <th className="p-3">Ukuran & MD5</th>
+                  <th className="p-3">Total Unduhan</th>
+                  <th className="p-3">Status Validator</th>
+                  <th className="p-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {firmwareList.map((fw) => (
+                  <tr key={fw.uuid} className="hover:bg-slate-50 dark:hover:bg-slate-950">
+                    <td className="p-3">
+                      <div className="font-bold text-slate-900 dark:text-white">{fw.title}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">UUID: {fw.uuid} &bull; {fw.uploadDate}</div>
+                    </td>
+                    <td className="p-3">
+                      <span className="font-extrabold text-blue-600 dark:text-blue-400 block">{fw.manufacturer}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{fw.ic}</span>
+                    </td>
+                    <td className="p-3 font-mono font-bold text-slate-700 dark:text-slate-300">
+                      {fw.mainboard}
+                    </td>
+                    <td className="p-3 font-mono text-[11px]">
+                      <div>{fw.fileSize}</div>
+                      <span className="text-[9px] text-slate-400">MD5: {fw.md5}</span>
+                    </td>
+                    <td className="p-3 font-extrabold text-emerald-500">
+                      {(fw.downloadsCount || 0).toLocaleString('id-ID')}x
+                    </td>
+                    <td className="p-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1 w-fit">
+                        <CheckCircle className="w-3 h-3 text-emerald-500" />
+                        <span>TESTED 100%</span>
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <button
+                        onClick={() => setFirmwareList(firmwareList.filter((f) => f.uuid !== fw.uuid))}
+                        className="p-1 rounded text-red-500 hover:bg-red-500/10"
+                        title="Hapus Firmware"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       {adminTab === 'affiliate' && (
         <div className="space-y-6 animate-fadeIn">
           {/* Top Metric Cards */}

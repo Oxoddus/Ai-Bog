@@ -68,6 +68,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-orange-900 text-white text-xs py-1.5 px-4 hidden md:block">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 font-black text-orange-300 tracking-wide">
+              ⚡ TOKO ELEKTRONIK ONLINE & OFFLINE TERLENGKAP DI BLORA
+            </span>
+            <span className="text-slate-400">|</span>
             <span className="flex items-center gap-1 text-slate-200">
               <MapPin className="w-3.5 h-3.5 text-orange-400" />
               <span>Workshop UbayHub: Jl. Pemuda No. 88, Blora Kota, Jawa Tengah</span>
@@ -104,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4">
-          {/* Logo */}
+          {/* Logo with Tagline Prioritized */}
           <div
             className="cursor-pointer"
             onClick={() => {
@@ -112,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setMobileMenuOpen(false);
             }}
           >
-            <Logo variant="full" size="md" showTagline={false} />
+            <Logo variant="full" size="md" showTagline={true} />
           </div>
 
           {/* Live Search Bar */}
@@ -168,17 +172,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
             </button>
 
-            {/* Admin Login / Dashboard Button */}
+            {/* Admin Login / Dashboard Button - High Visibility */}
             <button
               onClick={openLoginModal}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition border ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition shadow-sm border ${
                 isAdminLoggedIn
-                  ? 'bg-emerald-600/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400'
-                  : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300/50 dark:border-slate-800 hover:bg-slate-200'
+                  ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-500'
               }`}
+              title="Akses Dashboard Admin UbayHub"
             >
-              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">
+              <ShieldCheck className="w-4 h-4 text-white animate-pulse" />
+              <span>
                 {isAdminLoggedIn ? 'Dashboard Admin' : 'Login Admin'}
               </span>
             </button>

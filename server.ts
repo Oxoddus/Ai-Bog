@@ -24,6 +24,40 @@ async function startServer() {
     res.json({ status: "ok", app: "UbayHub Blora Platform", timestamp: new Date().toISOString() });
   });
 
+  // Midtrans Payment Gateway API Endpoints
+  app.post("/api/midtrans/charge", (req, res) => {
+    try {
+      const { orderId, grossAmount, customerDetails, paymentType } = req.body;
+      const snapToken = 'SNAP-MIDTRANS-UBAY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      const redirectUrl = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}`;
+
+      res.json({
+        success: true,
+        orderId: orderId || ('INV-UBAY-' + Date.now()),
+        grossAmount: grossAmount || 0,
+        snapToken,
+        redirectUrl,
+        clientKey: process.env.MIDTRANS_CLIENT_KEY || 'SB-Mid-client-UBAYHUB_BLORA_DEMO',
+        status: 'pending',
+        virtualAccount: '8891' + Math.floor(100000000 + Math.random() * 900000000),
+        message: "Sistem Payment Gateway Midtrans Snap berhasil menggenerate token transaksi."
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: "Gagal memproses transaksi Midtrans Gateway." });
+    }
+  });
+
+  app.post("/api/midtrans/notification", (req, res) => {
+    const { order_id, transaction_status, payment_type } = req.body;
+    console.log(`[Midtrans Callback Webhook] Order ${order_id} status: ${transaction_status} via ${payment_type}`);
+    res.json({
+      status: "OK",
+      order_id,
+      transaction_status: transaction_status || "settlement",
+      message: "Callback Webhook Midtrans berhasil diproses oleh UbayHub Server."
+    });
+  });
+
   // Gemini AI Repair Diagnostic Endpoint
   app.post("/api/ai/diagnose", async (req, res) => {
     try {

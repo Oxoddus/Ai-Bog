@@ -8,7 +8,11 @@
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "cli": "sh cli.sh",
+    "deploy": "sh deploy.sh",
+    "docker:build": "docker build -t ubayhub-platform .",
+    "docker:run": "docker run -d -p 3000:3000 --env-file .env --name ubayhub-app ubayhub-platform"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

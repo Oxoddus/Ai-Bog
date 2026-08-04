@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ubayhub-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://ubay_user:secure_password@db:5432/ubayhub_db?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ubayhub-network
+
+  # PostgreSQL database service for enterprise persistence
+  db:
+    image: postgres:16-alpine
+    container_name: ubayhub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ubayhub_db
+      POSTGRES_USER: ubay_user
+      POSTGRES_PASSWORD: secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ubayhub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ubay_user -d ubayhub_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis in-memory cache service for fast session & firmware token management
+  redis:
+    image: redis:7-alpine
+    container_name: ubayhub-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ubayhub-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  ubayhub-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

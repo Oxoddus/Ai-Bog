@@ -82,17 +82,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Col: Hero Copy */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-extrabold tracking-wide">
-                <Flame className="w-4 h-4" />
-                <span>Pusat Service & Firmwares Elektronik Terbesar di Blora</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-black tracking-wider uppercase">
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span>TOKO ELEKTRONIK ONLINE & OFFLINE TERLENGKAP DI BLORA</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white">
-                Solusi Service Elektronik, <span className="bg-gradient-to-r from-orange-400 via-amber-300 to-blue-400 bg-clip-text text-transparent">Download Firmware Anti-Mati</span>, & Sparepart Blora
+                Toko Elektronik Online & Offline <span className="bg-gradient-to-r from-orange-400 via-amber-300 to-blue-400 bg-clip-text text-transparent">Terlengkap di Blora</span>
               </h1>
 
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-                Temukan ribuan file dump SPI Flash, NAND BIN teruji 100%, toko suku cadang elektronik original, penerimaan service seluruh Indonesia via COD, serta panduan kasus perbaikan terlengkap.
+                Portal elektronik, pusat service profesional, download firmware BIN 100% tested, toko sparepart IC original, serta komunitas teknisi terbesar di Kabupaten Blora.
               </p>
 
               {/* Quick Action Badges / CTAs */}
@@ -333,6 +333,106 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             {/* Sidebar Ad Placement */}
             <AdBannerComponent location="Sidebar Kanan" ads={ads} onAdClick={onAdClick} />
+          </div>
+        </div>
+      </section>
+
+      {/* Official Affiliate Ecosystem Channels (Shopee, TikTok Shop, Tokopedia) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <span className="text-[10px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-wider">
+                Ecosystem Marketplace & Partner Affiliate
+              </span>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                Official Marketplace & Link Affiliate UbayHub Blora
+              </h2>
+            </div>
+            <button
+              onClick={() => setCurrentTab('shop')}
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+            >
+              <span>Jelajahi Katalog Toko & Affiliate</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Shopee Affiliate Card */}
+            <a
+              href="https://shopee.co.id/search?keyword=ubayhub+blora"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent border border-orange-500/30 hover:border-orange-500/60 transition group space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-full bg-orange-600 text-white font-black text-[11px]">
+                  🛍️ Shopee Star Seller
+                </span>
+                <ExternalLink className="w-4 h-4 text-orange-500 group-hover:translate-x-0.5 transition" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Shopee Official Store & Affiliate</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  Gratis Ongkir Extra, Cashback XTRA & COD Seluruh Indonesia. Komisi affiliate hingga 8%.
+                </p>
+              </div>
+              <div className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                <span>Kunjungi Lapak Shopee</span>
+                <span>&rarr;</span>
+              </div>
+            </a>
+
+            {/* TikTok Shop Affiliate Card */}
+            <a
+              href="https://tiktok.com/@ubayhub_blora"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-gradient-to-br from-slate-900/10 via-stone-900/5 to-transparent border border-slate-700/50 hover:border-slate-500/80 transition group space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-full bg-slate-950 text-white font-black text-[11px] border border-slate-700">
+                  🎵 TikTok Shop Official
+                </span>
+                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">TikTok Live Shopping & Affiliate</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  Live streaming tutorial perbaikan TV & sikat voucher diskon khusus followers TikTok.
+                </p>
+              </div>
+              <div className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-1">
+                <span>Tonton Live & Beli TikTok Shop</span>
+                <span>&rarr;</span>
+              </div>
+            </a>
+
+            {/* Tokopedia Affiliate Card */}
+            <a
+              href="https://tokopedia.com/search?q=ubayhub+blora"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/30 hover:border-emerald-500/60 transition group space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white font-black text-[11px]">
+                  🟢 Tokopedia Power Merchant
+                </span>
+                <ExternalLink className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Tokopedia Official Store</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  Pengiriman GoSend/GrabExpress sameday & bebas ongkir Tokopedia dengan jaminan original.
+                </p>
+              </div>
+              <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span>Kunjungi Store Tokopedia</span>
+                <span>&rarr;</span>
+              </div>
+            </a>
           </div>
         </div>
       </section>

@@ -82,13 +82,19 @@ export const LoginAdminModal: React.FC<LoginAdminModalProps> = ({
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
-          {/* Security Banner */}
-          <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-800/60 text-slate-300 flex items-center justify-between text-[11px]">
-            <span className="flex items-center gap-1.5 text-blue-400">
-              <Lock className="w-3.5 h-3.5" />
-              <span>IP: 180.252.88.19 (Blora, Central Java)</span>
-            </span>
-            <span className="text-emerald-400 font-bold">WAF Active</span>
+          {/* Security Banner & Quick Demo Credentials */}
+          <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-800/80 text-slate-300 space-y-1 text-[11px]">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-blue-400 font-bold">
+                <Lock className="w-3.5 h-3.5" />
+                <span>IP: 180.252.88.19 (Blora, Central Java)</span>
+              </span>
+              <span className="text-emerald-400 font-extrabold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">Argon2 WAF Active</span>
+            </div>
+            <div className="pt-1.5 border-t border-blue-900/60 text-slate-400 flex items-center justify-between font-mono text-[10px]">
+              <span>Demo Login: <strong className="text-orange-400">ubay_master</strong></span>
+              <span>Password: <strong className="text-orange-400">ubay123456</strong></span>
+            </div>
           </div>
 
           {!requires2fa ? (

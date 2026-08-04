@@ -11,8 +11,10 @@ import {
   ExternalLink,
   Award,
   Clock,
-  Wrench
+  Wrench,
+  Compass
 } from 'lucide-react';
+import { PinMapBlora } from '../common/PinMapBlora';
 
 interface TechniciansViewProps {
   technicians: Technician[];
@@ -23,7 +25,7 @@ export const TechniciansView: React.FC<TechniciansViewProps> = ({
   technicians,
   shops
 }) => {
-  const [directoryTab, setDirectoryTab] = useState<'technicians' | 'shops'>('technicians');
+  const [directoryTab, setDirectoryTab] = useState<'technicians' | 'shops' | 'pinmap'>('pinmap');
   const [selectedArea, setSelectedArea] = useState('All');
 
   const areas = ['All', 'Blora Kota', 'Cepu', 'Kunduran', 'Randublatung'];
@@ -45,14 +47,26 @@ export const TechniciansView: React.FC<TechniciansViewProps> = ({
             Direktori Terpercaya Kabupaten Blora
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-white mt-2">
-            Teknisi Elektronika & Toko Sparepart Terverifikasi
+            Teknisi Elektronika, Toko Sparepart & PinMap Blora
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-            Cari teknisi panggilan terpercaya di Blora Kota, Cepu, Kunduran, Ngawen, Randublatung, dan kecamatan sekitar. Lengkap dengan sertifikat keahlian dan ulasan pelanggan.
+            Cari lokasi toko fisik UbayHub, titik cabang service, serta teknisi panggilan terpercaya di Blora Kota, Cepu, Kunduran, Ngawen, Randublatung, dan 16 Kecamatan Blora.
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setDirectoryTab('pinmap')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-1.5 ${
+              directoryTab === 'pinmap'
+                ? 'bg-orange-500 text-white shadow'
+                : 'bg-white/10 text-slate-200 hover:bg-white/20'
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            <span>PinMap Blora</span>
+          </button>
+
           <button
             onClick={() => setDirectoryTab('technicians')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs transition ${
@@ -61,8 +75,9 @@ export const TechniciansView: React.FC<TechniciansViewProps> = ({
                 : 'bg-white/10 text-slate-200 hover:bg-white/20'
             }`}
           >
-            Direktori Teknisi ({technicians.length})
+            Teknisi ({technicians.length})
           </button>
+
           <button
             onClick={() => setDirectoryTab('shops')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs transition ${
@@ -71,10 +86,15 @@ export const TechniciansView: React.FC<TechniciansViewProps> = ({
                 : 'bg-white/10 text-slate-200 hover:bg-white/20'
             }`}
           >
-            Toko Sparepart ({shops.length})
+            Toko ({shops.length})
           </button>
         </div>
       </div>
+
+      {/* PinMap Section */}
+      {directoryTab === 'pinmap' && (
+        <PinMapBlora />
+      )}
 
       {/* Area Filter */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs">
