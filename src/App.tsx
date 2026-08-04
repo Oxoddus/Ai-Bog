@@ -16,12 +16,16 @@ import { ArticlesView } from './components/views/ArticlesView';
 import { TechniciansView } from './components/views/TechniciansView';
 import { AdminDashboardView } from './components/views/AdminDashboardView';
 
-// Modals
+// Modals & Tools
 import { BrandGuidelineModal } from './components/modals/BrandGuidelineModal';
 import { AiDiagnosticModal } from './components/modals/AiDiagnosticModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { LoginAdminModal } from './components/modals/LoginAdminModal';
 import { FloatingWidgets } from './components/common/FloatingWidgets';
+import { QrPaymentTrackingModal } from './components/common/QrPaymentTrackingModal';
+import { SeoSitemapModal } from './components/common/SeoSitemapModal';
+import { ServiceStatusNotificationModal } from './components/common/ServiceStatusNotificationModal';
+import { OfflineStatusIndicator } from './components/common/OfflineStatusIndicator';
 
 // Mock Data & Types
 import {
@@ -78,6 +82,9 @@ export default function App() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isSeoModalOpen, setIsSeoModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
   // Admin Auth State
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -193,6 +200,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 selection:bg-orange-500 selection:text-white flex flex-col justify-between overflow-x-hidden max-w-full w-full">
+      {/* PWA Offline Status Banner */}
+      <OfflineStatusIndicator />
+
       {/* Header Navigation */}
       <Navbar
         currentTab={currentTab}
@@ -211,6 +221,9 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearchSubmit={handleSearchSubmit}
+        openQrTracker={() => setIsQrModalOpen(true)}
+        openSeoSitemap={() => setIsSeoModalOpen(true)}
+        openNotificationModal={() => setIsNotificationModalOpen(true)}
       />
 
       {/* Main View Router */}
@@ -300,6 +313,7 @@ export default function App() {
       <Footer
         setCurrentTab={setCurrentTab}
         openBrandModal={() => setIsBrandModalOpen(true)}
+        openSeoSitemap={() => setIsSeoModalOpen(true)}
       />
 
       {/* Floating Interactive Widgets (WhatsApp, Telegram, Live Chat, Sticky Ad) */}
@@ -336,6 +350,21 @@ export default function App() {
           setAdminUser(user);
           setCurrentTab('admin');
         }}
+      />
+
+      <QrPaymentTrackingModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+      />
+
+      <SeoSitemapModal
+        isOpen={isSeoModalOpen}
+        onClose={() => setIsSeoModalOpen(false)}
+      />
+
+      <ServiceStatusNotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
       />
     </div>
   );

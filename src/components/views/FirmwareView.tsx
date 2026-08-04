@@ -14,8 +14,10 @@ import {
   FileCheck,
   Info,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Eye
 } from 'lucide-react';
+import { FirmwarePreviewModal } from '../common/FirmwarePreviewModal';
 
 interface FirmwareViewProps {
   firmwares: Firmware[];
@@ -33,6 +35,7 @@ export const FirmwareView: React.FC<FirmwareViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('All');
   const [copiedMd5, setCopiedMd5] = useState(false);
+  const [previewFirmware, setPreviewFirmware] = useState<Firmware | null>(null);
 
   // Download Token Modal States
   const [downloadStep, setDownloadStep] = useState<'details' | 'captcha' | 'generating' | 'ready'>('details');
@@ -225,13 +228,24 @@ export const FirmwareView: React.FC<FirmwareViewProps> = ({
                   Diunduh: <strong>{fw.downloadsCount} kali</strong>
                 </span>
 
-                <button
-                  onClick={() => handleStartDownloadFlow(fw)}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download BIN</span>
-                </button>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setPreviewFirmware(fw)}
+                    className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs flex items-center gap-1 border border-slate-200 dark:border-slate-700"
+                    title="Preview Card Detail BIN & Checksum"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-orange-500" />
+                    <span>Preview BIN</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleStartDownloadFlow(fw)}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -368,6 +382,17 @@ export const FirmwareView: React.FC<FirmwareViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Firmware Interactive Preview Card Modal */}
+      <FirmwarePreviewModal
+        isOpen={Boolean(previewFirmware)}
+        onClose={() => setPreviewFirmware(null)}
+        firmware={previewFirmware}
+        onStartDownload={(fw) => {
+          setPreviewFirmware(null);
+          handleStartDownloadFlow(fw);
+        }}
+      />
     </div>
   );
 };

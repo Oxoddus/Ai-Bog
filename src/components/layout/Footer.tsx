@@ -17,9 +17,10 @@ import {
 interface FooterProps {
   setCurrentTab: (tab: string) => void;
   openBrandModal: () => void;
+  openSeoSitemap?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ setCurrentTab, openBrandModal }) => {
+export const Footer: React.FC<FooterProps> = ({ setCurrentTab, openBrandModal, openSeoSitemap }) => {
   return (
     <footer className="bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -176,6 +177,43 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, openBrandModal })
           </div>
         </div>
 
+        {/* Payment Methods Showcase Section */}
+        <div className="py-6 border-b border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+            <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 font-extrabold uppercase text-[10px]">
+              METODE PEMBAYARAN RESMI
+            </span>
+            <span>Dukungan Transaksi Instant & Opsi E-Wallet / Crypto:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-black text-orange-400 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+              <span>ShopeePay</span>
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-black text-blue-400 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span>DANA</span>
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-black text-emerald-400 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>GoPay</span>
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-black text-amber-400 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span>Crypto (USDT / BTC / ETH)</span>
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-black text-purple-400 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+              <span>QRIS Semua Bank</span>
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-black text-sky-400 shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+              <span>Transfer Bank & COD</span>
+            </span>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <div className="flex items-center gap-2">
@@ -183,6 +221,14 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, openBrandModal })
             <span>&copy; {new Date().getFullYear()} UbayHub Blora. Hak Cipta Dilindungi Undang-Undang.</span>
           </div>
           <div className="flex items-center gap-4">
+            {openSeoSitemap && (
+              <button
+                onClick={openSeoSitemap}
+                className="text-slate-400 hover:text-orange-400 transition underline flex items-center gap-1 font-bold"
+              >
+                <span>Automated Sitemap XML & CEO Schema</span>
+              </button>
+            )}
             <span>Server Status: <span className="text-emerald-400 font-bold">100% Online (Blora Node #1)</span></span>
             <span>•</span>
             <span>Enterprise Security (Argon2 / Signed Tokens)</span>

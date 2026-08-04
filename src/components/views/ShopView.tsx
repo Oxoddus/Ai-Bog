@@ -11,8 +11,10 @@ import {
   Tag,
   Truck,
   ShieldCheck,
-  Percent
+  Percent,
+  Scale
 } from 'lucide-react';
+import { ProductComparisonModal } from '../common/ProductComparisonModal';
 
 interface ShopViewProps {
   products: Product[];
@@ -29,6 +31,11 @@ export const ShopView: React.FC<ShopViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [affiliateFilter, setAffiliateFilter] = useState<'All' | 'Shopee' | 'TikTok' | 'Tokopedia' | 'UbayHub'>('All');
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
+
+  // Comparison Tool Modal States
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [compareProductA, setCompareProductA] = useState<Product | undefined>();
+  const [compareProductB, setCompareProductB] = useState<Product | undefined>();
 
   const categories = ['All', 'IC', 'LED Strip', 'Mainboard', 'Tools & Equipment', 'Arduino & ESP32 / IoT'];
 
@@ -78,13 +85,27 @@ export const ShopView: React.FC<ShopViewProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={openCheckout}
-          className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg shrink-0"
-        >
-          <ShoppingBag className="w-4 h-4" />
-          <span>Lihat Keranjang & Faktur Order</span>
-        </button>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <button
+            onClick={() => {
+              setCompareProductA(products[0]);
+              setCompareProductB(products[1]);
+              setIsCompareOpen(true);
+            }}
+            className="px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg"
+          >
+            <Scale className="w-4 h-4 text-orange-300" />
+            <span>Bandingkan Spesifikasi Produk</span>
+          </button>
+
+          <button
+            onClick={openCheckout}
+            className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Lihat Keranjang & Faktur Order</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search */}
@@ -263,27 +284,53 @@ export const ShopView: React.FC<ShopViewProps> = ({
                   </div>
                 ) : null}
 
-                <button
-                  onClick={() => handleAddCartLocal(p)}
-                  className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition"
-                >
-                  {addedIds[p.id] ? (
-                    <>
-                      <Check className="w-4 h-4 text-emerald-300" />
-                      <span>Masuk Keranjang!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4" />
-                      <span>Tambah ke Keranjang UbayHub</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setCompareProductA(p);
+                      const other = products.find((item) => item.id !== p.id) || p;
+                      setCompareProductB(other);
+                      setIsCompareOpen(true);
+                    }}
+                    className="py-2 px-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center gap-1 border border-slate-200 dark:border-slate-700"
+                    title="Bandingkan spesifikasi dengan produk lain"
+                  >
+                    <Scale className="w-3.5 h-3.5 text-orange-500" />
+                    <span>Bandingkan</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleAddCartLocal(p)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition"
+                  >
+                    {addedIds[p.id] ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-300" />
+                        <span>Masuk Keranjang!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        <span>Tambah ke Keranjang UbayHub</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Product Comparison Tool Modal */}
+      <ProductComparisonModal
+        isOpen={isCompareOpen}
+        onClose={() => setIsCompareOpen(false)}
+        products={products}
+        onAddToCart={onAddToCart}
+        initialProductA={compareProductA}
+        initialProductB={compareProductB}
+      />
     </div>
   );
 };

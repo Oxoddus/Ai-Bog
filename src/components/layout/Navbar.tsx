@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '../common/Logo';
 import {
   Search,
@@ -16,7 +17,11 @@ import {
   PhoneCall,
   MapPin,
   Clock,
-  Palette
+  Palette,
+  QrCode,
+  Globe,
+  Bell,
+  Mic
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -33,6 +38,9 @@ interface NavbarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onSearchSubmit: (e: React.FormEvent) => void;
+  openQrTracker?: () => void;
+  openSeoSitemap?: () => void;
+  openNotificationModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -48,9 +56,54 @@ export const Navbar: React.FC<NavbarProps> = ({
   isAdminLoggedIn,
   searchQuery,
   setSearchQuery,
-  onSearchSubmit
+  onSearchSubmit,
+  openQrTracker,
+  openSeoSitemap,
+  openNotificationModal
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Browser Anda belum mendukung SpeechRecognition API. Gunakan Google Chrome / MS Edge.');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (e: any) => {
+        const transcript = e.results[0][0].transcript;
+        if (transcript) {
+          setSearchQuery(transcript);
+          // Trigger search view tab
+          setCurrentTab('firmware');
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+      recognition.start();
+    } catch (err) {
+      console.error(err);
+      setIsListening(false);
+    }
+  };
 
   const navItems = [
     { id: 'home', label: 'Beranda', icon: BookOpen },
@@ -119,22 +172,42 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Logo variant="full" size="md" showTagline={true} />
           </div>
 
-          {/* Live Search Bar */}
+          {/* Live Search Bar with SpeechRecognition Voice Input */}
           <form onSubmit={onSearchSubmit} className="hidden lg:flex flex-1 max-w-md relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari Firmware, Kode Error TV, IC, Sparepart, atau Resi Servis..."
-              className="w-full pl-10 pr-24 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:text-white text-slate-900 placeholder-slate-400"
+              className={`w-full pl-10 pr-28 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-900 border text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none transition ${
+                isListening
+                  ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-50/50 dark:bg-rose-950/20'
+                  : 'border-slate-300/80 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/50'
+              }`}
             />
             <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
-            <button
-              type="submit"
-              className="absolute right-1 top-1 px-3 py-1 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
-            >
-              Cari
-            </button>
+            
+            <div className="absolute right-1 top-1 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleVoiceSearch}
+                className={`p-1.5 rounded-full transition ${
+                  isListening
+                    ? 'bg-rose-600 text-white animate-bounce shadow-md'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-500 hover:bg-orange-100 dark:hover:bg-slate-700'
+                }`}
+                title="Pencarian Suara (Speech Recognition API Bahasa Indonesia)"
+              >
+                <Mic className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="submit"
+                className="px-3 py-1 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
+              >
+                Cari
+              </button>
+            </div>
           </form>
 
           {/* Action Tools */}
@@ -163,14 +236,63 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Dark / Light Toggle */}
-            <button
+            {/* Quick Tools: QR Tracker, SEO Sitemap, Service Notifications */}
+            {openQrTracker && (
+              <button
+                onClick={openQrTracker}
+                className="hidden xl:flex items-center gap-1 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition"
+                title="Lacak Lunas QRIS & E-Wallet"
+              >
+                <QrCode className="w-4 h-4 text-orange-500" />
+              </button>
+            )}
+
+            {openNotificationModal && (
+              <button
+                onClick={openNotificationModal}
+                className="hidden xl:flex items-center gap-1 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition relative"
+                title="Pusat Notifikasi Servis WhatsApp"
+              >
+                <Bell className="w-4 h-4 text-blue-500" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+              </button>
+            )}
+
+            {openSeoSitemap && (
+              <button
+                onClick={openSeoSitemap}
+                className="hidden xl:flex items-center gap-1 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition"
+                title="Automated SEO Sitemap & Schema"
+              >
+                <Globe className="w-4 h-4 text-emerald-500" />
+              </button>
+            )}
+
+            {/* Dark / Light Toggle with Smooth Motion Animation */}
+            <motion.button
+              whileTap={{ scale: 0.85, rotate: 180 }}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition"
-              title="Ganti Mode Gelap/Terang"
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition shadow-inner relative overflow-hidden"
+              title="Ganti Mode Gelap/Terang (Animasi Smoove)"
             >
-              {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={darkMode ? 'dark' : 'light'}
+                  initial={{ y: -20, opacity: 0, rotate: -90 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 20, opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {darkMode ? (
+                    <Sun className="w-5 h-5 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-indigo-600 drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
 
             {/* Admin Login / Dashboard Button - High Visibility */}
             <button

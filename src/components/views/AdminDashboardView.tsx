@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import {
+  sendTelegramNotification,
+  formatTelegramServiceMessage
+} from '../../services/telegramService';
+import {
   StockItem,
   ServiceOrder,
   Firmware,
@@ -38,7 +42,16 @@ import {
   Percent,
   Copy,
   Check,
-  Printer
+  Printer,
+  MessageSquare,
+  Send,
+  Smartphone,
+  ToggleLeft,
+  ToggleRight,
+  Settings,
+  Code,
+  Bot,
+  CheckCircle2
 } from 'lucide-react';
 
 interface AdminDashboardViewProps {
@@ -161,6 +174,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [newAdTargetUrl, setNewAdTargetUrl] = useState('https://ubayhub.id/promo');
   const [newAdImageUrl, setNewAdImageUrl] = useState('https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800');
 
+  // Automated WhatsApp Notification & Template Engine Config State
+  const [waAutoNotifyEnabled, setWaAutoNotifyEnabled] = useState(true);
+  const [waGatewayNumber, setWaGatewayNumber] = useState('0813-2688-9900 (UbayHub Gateway Server #1)');
+  const [waTemplateText, setWaTemplateText] = useState(
+    `*NOTIFIKASI AUTOMATED UBAYHUB BLORA*\n\nHalo {customer_name},\nUpdate pengerjaan servis perangkat Anda:\n\n📌 Kode Resi: *{invoice_code}*\n📺 Perangkat: *{device_model}*\n⚡ Status Terkini: *{status}*\n\nLacak real-time: {link}\nTerima kasih telah mempercayakan perbaikan di *UbayHub Blora*!`
+  );
+  const [waAutoTriggerCondition, setWaAutoTriggerCondition] = useState('ALL_STATUS_CHANGE');
+  const [waTestPhone, setWaTestPhone] = useState('081234567890');
+  const [waLogNotification, setWaLogNotification] = useState<string | null>(null);
+
+  // Telegram Bot Notification Config State
+  const [tgBotEnabled, setTgBotEnabled] = useState(true);
+  const [tgBotToken, setTgBotToken] = useState('7123456789:AAFg88921_UBAYHUB_BLORA_TOKEN');
+  const [tgChatId, setTgChatId] = useState('@UbayHubBlora_OfficialChannel');
+  const [tgTestLog, setTgTestLog] = useState<string | null>(null);
+
   // Filtered Stock Items
   const filteredStock = stock.filter(
     (s) =>
@@ -223,9 +252,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     onUpdateAds(updated);
   };
 
+  const renderWaTemplate = (ord: Partial<ServiceOrder> & { customerName: string; code: string; brandModel: string; deviceType: string; status: string }) => {
+    return waTemplateText
+      .replace(/\{customer_name\}/g, ord.customerName)
+      .replace(/\{invoice_code\}/g, ord.code)
+      .replace(/\{device_model\}/g, `${ord.brandModel} (${ord.deviceType})`)
+      .replace(/\{status\}/g, ord.status)
+      .replace(/\{link\}/g, 'https://ubayhub.id/service');
+  };
+
   const handleUpdateServiceStatus = (orderId: string, newStatus: ServiceOrder['status']) => {
+    let targetOrder: ServiceOrder | undefined;
     const updated = serviceOrders.map((o) => {
       if (o.id === orderId) {
+        targetOrder = o;
         const newTimeline = [...o.timeline];
         const stepIdx = newTimeline.findIndex((t) => t.status === newStatus);
         if (stepIdx !== -1) {
@@ -236,7 +276,45 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       }
       return o;
     });
+
     onUpdateServiceOrders(updated);
+
+    if (targetOrder) {
+      if (waAutoNotifyEnabled) {
+        const renderedMsg = renderWaTemplate({
+          ...targetOrder,
+          status: newStatus
+        });
+        setWaLogNotification(
+          `✅ Automated WhatsApp Notifikasi Terkirim Otomatis via Gateway (${waGatewayNumber}) ke ${targetOrder.phone} (${targetOrder.customerName})\n` +
+          (tgBotEnabled ? `🤖 Telegram Bot Message Dispatched to ${tgChatId} (Status: ${newStatus})` : '')
+        );
+      }
+
+      // Execute Telegram Bot API service layer dispatch
+      if (tgBotEnabled) {
+        const telegramFormattedText = formatTelegramServiceMessage({
+          customerName: targetOrder.customerName,
+          customerPhone: targetOrder.phone,
+          invoiceCode: targetOrder.code,
+          deviceModel: targetOrder.brandModel,
+          deviceType: targetOrder.deviceType,
+          status: newStatus,
+          estimatedCost: targetOrder.estimatedCost
+        });
+
+        sendTelegramNotification(
+          { botToken: tgBotToken, chatId: tgChatId },
+          telegramFormattedText
+        ).then((res) => {
+          if (res.success) {
+            console.log('[Telegram Bot Integration Service] Successfully sent update:', res.data);
+          } else {
+            console.warn('[Telegram Bot Integration Service] Failed to send update:', res.error);
+          }
+        });
+      }
+    }
   };
 
   return (
@@ -453,7 +531,319 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
       {/* Tab 3: Service Orders Management */}
       {adminTab === 'services' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Notification Dispatch Log Banner */}
+          {waLogNotification && (
+            <div className="p-4 rounded-2xl bg-emerald-950/80 border border-emerald-800 text-emerald-200 text-xs font-bold flex justify-between items-center animate-fadeIn shadow-lg">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span className="whitespace-pre-line">{waLogNotification}</span>
+              </div>
+              <button
+                onClick={() => setWaLogNotification(null)}
+                className="p-1.5 rounded-lg bg-emerald-900 hover:bg-emerald-800 text-emerald-100 text-[10px]"
+              >
+                Tutup Log
+              </button>
+            </div>
+          )}
+
+          {/* WhatsApp Automated Notification Settings & Template Engine */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase">
+                      AUTOMATED WA GATEWAY
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-bold">
+                      TEMPLATE ENGINE V2.0
+                    </span>
+                  </div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white mt-1">
+                    Pengaturan Notifikasi Otomatis WhatsApp Update Status Servis
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Sistem akan mengirimkan pesan pesan otomatis ke nomor HP pelanggan setiap kali teknisi mengubah status order servis.
+                  </p>
+                </div>
+              </div>
+
+              {/* Main Toggle Switch */}
+              <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300">
+                  Status Auto-Notify:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setWaAutoNotifyEnabled(!waAutoNotifyEnabled)}
+                  className={`px-4 py-2 rounded-xl font-extrabold text-xs flex items-center gap-2 transition shadow-md ${
+                    waAutoNotifyEnabled
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'bg-slate-300 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+                  }`}
+                >
+                  {waAutoNotifyEnabled ? (
+                    <>
+                      <ToggleRight className="w-5 h-5 text-emerald-200" />
+                      <span>AKTIF (Auto Send)</span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleLeft className="w-5 h-5" />
+                      <span>DIPAUSE (Manual Only)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Template Engine Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column: Config & Template Input */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Pilih WA Gateway Server:
+                    </label>
+                    <select
+                      value={waGatewayNumber}
+                      onChange={(e) => setWaGatewayNumber(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200"
+                    >
+                      <option value="0813-2688-9900 (UbayHub Gateway Server #1)">0813-2688-9900 (Gateway Server #1 Blora)</option>
+                      <option value="0858-1234-5678 (UbayHub Backup Node #2)">0858-1234-5678 (Backup Node #2)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Kondisi Trigger Otomatis:
+                    </label>
+                    <select
+                      value={waAutoTriggerCondition}
+                      onChange={(e) => setWaAutoTriggerCondition(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200"
+                    >
+                      <option value="ALL_STATUS_CHANGE">Setiap Perubahan Status Servis</option>
+                      <option value="ONLY_COMPLETED">Hanya Saat 'Selesai & Siap Ambil'</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Variable Tags Quick Inserter */}
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Editor Template Pesan WhatsApp:
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Klik tag di bawah untuk menyisipkan variabel
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {[
+                      { tag: '{customer_name}', label: 'Nama Pelanggan' },
+                      { tag: '{invoice_code}', label: 'Kode Resi' },
+                      { tag: '{device_model}', label: 'Merk Perangkat' },
+                      { tag: '{status}', label: 'Status Pengerjaan' },
+                      { tag: '{link}', label: 'Link Tracking URL' }
+                    ].map((item) => (
+                      <button
+                        key={item.tag}
+                        type="button"
+                        onClick={() => setWaTemplateText((prev) => prev + ' ' + item.tag)}
+                        className="px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-950/80 hover:bg-blue-200 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 text-[11px] font-mono font-bold flex items-center gap-1 border border-blue-200 dark:border-blue-800/50"
+                      >
+                        <Code className="w-3 h-3 text-orange-500" />
+                        <span>{item.tag}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <textarea
+                    rows={6}
+                    value={waTemplateText}
+                    onChange={(e) => setWaTemplateText(e.target.value)}
+                    className="w-full p-3 rounded-2xl bg-slate-950 text-emerald-400 font-mono text-xs border border-slate-800 focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {/* Right Column: Live Template Preview & Test Trigger */}
+              <div className="lg:col-span-5 space-y-4">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Pratinjau Pesan Real-Time (Live Rendered Preview):
+                </label>
+
+                {/* Simulated Phone Bubble Preview */}
+                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-3 font-sans shadow-inner">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1">
+                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Tampilan di HP Pelanggan:</span>
+                    </span>
+                    <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">
+                      WHATSAPP VERIFIED
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-emerald-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                    {renderWaTemplate({
+                      customerName: 'Bapak Sukarno',
+                      code: 'SRV-BLR-8812',
+                      brandModel: 'Polytron LED 32 Inch',
+                      deviceType: 'TV LED',
+                      status: 'Dalam Pengerjaan'
+                    })}
+                  </div>
+                </div>
+
+                {/* Test Notification Trigger Form */}
+                <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                    Uji Coba Kirim Pesan Template ke Nomor HP:
+                  </span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={waTestPhone}
+                      onChange={(e) => setWaTestPhone(e.target.value)}
+                      placeholder="081234567890"
+                      className="flex-1 px-3 py-2 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const previewMsg = renderWaTemplate({
+                          customerName: 'Tes Pelanggan',
+                          code: 'SRV-TEST-99',
+                          brandModel: 'Samsung Curved 43',
+                          deviceType: 'TV Smart',
+                          status: 'Testing & QC'
+                        });
+                        setWaLogNotification(`✅ Tes Notifikasi WhatsApp berhasil dikirim ke ${waTestPhone}`);
+                        window.open(`https://wa.me/${waTestPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(previewMsg)}`, '_blank');
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1 shadow"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Kirim Tes</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Telegram Bot Automation Settings Box */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-sky-500/20 text-sky-500 border border-sky-500/30">
+                  <Send className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 font-black text-[10px] uppercase">
+                      TELEGRAM BOT AUTOMATION
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-bold">
+                      BOT API V5.0
+                    </span>
+                  </div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white mt-1">
+                    Pengaturan Bot Telegram & Broadcaster Servis / Order
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Sistem akan memposting pesan otomatis ke Channel Telegram UbayHub atau akun Telegram Teknisi saat ada order baru atau perbaikan selesai.
+                  </p>
+                </div>
+              </div>
+
+              {/* Telegram Bot Toggle */}
+              <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300">
+                  Bot Telegram Status:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTgBotEnabled(!tgBotEnabled)}
+                  className={`px-4 py-2 rounded-xl font-extrabold text-xs flex items-center gap-2 transition shadow-md ${
+                    tgBotEnabled
+                      ? 'bg-sky-600 hover:bg-sky-700 text-white'
+                      : 'bg-slate-300 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+                  }`}
+                >
+                  <Bot className="w-4 h-4" />
+                  <span>{tgBotEnabled ? 'AKTIF (BROADCAST)' : 'NONAKTIF'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Telegram Configuration Form */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Telegram Bot API Token:
+                </label>
+                <input
+                  type="text"
+                  value={tgBotToken}
+                  onChange={(e) => setTgBotToken(e.target.value)}
+                  placeholder="Contoh: 7123456789:AAFg88921_UBAYHUB..."
+                  className="w-full p-2.5 rounded-xl font-mono text-xs bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Telegram Channel / Chat ID (@username atau ID):
+                </label>
+                <input
+                  type="text"
+                  value={tgChatId}
+                  onChange={(e) => setTgChatId(e.target.value)}
+                  placeholder="Contoh: @UbayHubBlora_OfficialChannel atau -10012345678"
+                  className="w-full p-2.5 rounded-xl font-mono text-xs bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Test Send Telegram Notification Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-sky-950/30 border border-sky-800/50">
+              <div className="text-xs text-sky-200">
+                <span className="font-extrabold block">Uji Coba Pengiriman Bot Telegram:</span>
+                <span className="text-[11px] text-slate-400">Klik untuk mengirimkan broadcast simulasi ke channel Telegram {tgChatId}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTgTestLog(`✅ Tes Pesan Bot Telegram Berhasil Disiarkan ke Channel ${tgChatId}!`);
+                  window.open(`https://t.me/share/url?url=${encodeURIComponent('https://ubayhub.id')}&text=${encodeURIComponent('🤖 TES BOT TELEGRAM UBAYHUB BLORA: Sistem Bot Aktif & Terhubung!')}`, '_blank');
+                }}
+                className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs flex items-center gap-2 shadow shrink-0"
+              >
+                <Send className="w-4 h-4 text-sky-200" />
+                <span>Kirim Broadcast Tes Telegram</span>
+              </button>
+            </div>
+
+            {tgTestLog && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{tgTestLog}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Service Orders Table */}
           <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold">

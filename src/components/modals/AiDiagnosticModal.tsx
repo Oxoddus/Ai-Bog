@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Bot, Sparkles, Loader2, Wrench, ShieldAlert, Cpu, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Bot, Sparkles, Loader2, Wrench, ShieldAlert, Cpu, CheckCircle, Mic, MicOff, Volume2 } from 'lucide-react';
 
 interface AiDiagnosticModalProps {
   isOpen: boolean;
@@ -14,6 +14,61 @@ export const AiDiagnosticModal: React.FC<AiDiagnosticModalProps> = ({ isOpen, on
   
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+    }
+  }, []);
+
+  const handleToggleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Browser Anda belum mendukung SpeechRecognition API. Silakan gunakan Google Chrome atau MS Edge.');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setSymptoms((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = (err: any) => {
+        console.warn('Speech recognition error:', err);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error(err);
+      setIsListening(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -123,16 +178,56 @@ export const AiDiagnosticModal: React.FC<AiDiagnosticModalProps> = ({ isOpen, on
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Deskripsikan Gejala Kerusakan (Gejala Fisik, Lampu Indikator, Suara, Layar)
-              </label>
-              <textarea
-                value={symptoms}
-                onChange={(e) => setSymptoms(e.target.value)}
-                rows={3}
-                placeholder="Jelaskan secara rinci apa yang terjadi pada perangkat..."
-                className="w-full p-2.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white"
-              />
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Deskripsikan Gejala Kerusakan (Gejala Fisik, Lampu Indikator, Suara, Layar)
+                </label>
+
+                {/* Speech Recognition Voice Microphone Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleVoiceInput}
+                  className={`px-3 py-1 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition border shadow-sm ${
+                    isListening
+                      ? 'bg-rose-600 text-white border-rose-400 animate-pulse ring-2 ring-rose-500/50'
+                      : 'bg-slate-200 dark:bg-slate-800 hover:bg-orange-500 hover:text-white text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+                  }`}
+                  title="Gunakan Input Suara (Speech Recognition API Bahasa Indonesia)"
+                >
+                  {isListening ? (
+                    <>
+                      <Mic className="w-3.5 h-3.5 text-white animate-bounce" />
+                      <span>Mendengarkan Suara... (Bicara Sekarang)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-3.5 h-3.5 text-orange-500" />
+                      <span>Bicara Gejala (Voice Input)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="relative">
+                <textarea
+                  value={symptoms}
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  rows={3}
+                  placeholder="Jelaskan atau sebutkan secara lisan gejala kerusakan perangkat Anda..."
+                  className={`w-full p-2.5 text-xs rounded-lg bg-white dark:bg-slate-900 border text-slate-900 dark:text-white transition ${
+                    isListening
+                      ? 'border-rose-500 ring-2 ring-rose-500/30'
+                      : 'border-slate-300 dark:border-slate-800'
+                  }`}
+                />
+
+                {isListening && (
+                  <div className="absolute right-3 bottom-3 flex items-center gap-1 text-[10px] font-extrabold text-rose-500 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-800/80 animate-pulse">
+                    <Volume2 className="w-3 h-3 text-rose-400" />
+                    <span>RECORDING VOICE...</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <button
