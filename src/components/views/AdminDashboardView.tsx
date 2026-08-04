@@ -1,0 +1,946 @@
+import React, { useState } from 'react';
+import {
+  StockItem,
+  ServiceOrder,
+  Firmware,
+  AdBanner,
+  User,
+  AuditLog,
+  AdPlacement
+} from '../../types';
+import {
+  ShieldCheck,
+  BarChart3,
+  Box,
+  Wrench,
+  Download,
+  Megaphone,
+  Lock,
+  Plus,
+  Trash2,
+  Edit,
+  Search,
+  CheckCircle,
+  AlertTriangle,
+  QrCode,
+  FileSpreadsheet,
+  FileText,
+  Eye,
+  MousePointer,
+  RefreshCw,
+  LogOut,
+  Sparkles,
+  DollarSign,
+  ExternalLink,
+  TrendingUp,
+  Share2,
+  ShoppingBag,
+  Percent,
+  Copy,
+  Check
+} from 'lucide-react';
+
+interface AdminDashboardViewProps {
+  currentUser: User;
+  stock: StockItem[];
+  serviceOrders: ServiceOrder[];
+  firmwares: Firmware[];
+  ads: AdBanner[];
+  auditLogs: AuditLog[];
+  onLogout: () => void;
+  onUpdateStock: (stk: StockItem[]) => void;
+  onUpdateServiceOrders: (orders: ServiceOrder[]) => void;
+  onUpdateAds: (ads: AdBanner[]) => void;
+}
+
+export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
+  currentUser,
+  stock,
+  serviceOrders,
+  firmwares,
+  ads,
+  auditLogs,
+  onLogout,
+  onUpdateStock,
+  onUpdateServiceOrders,
+  onUpdateAds
+}) => {
+  const [adminTab, setAdminTab] = useState<'overview' | 'stock' | 'services' | 'ads' | 'affiliate' | 'security'>('overview');
+  const [stockSearch, setStockSearch] = useState('');
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+
+  // Affiliate Mock Data State
+  const [affiliateLinks, setAffiliateLinks] = useState([
+    {
+      id: 'aff-01',
+      title: 'Solder Station Quick 861DW 1000W High Power',
+      marketplace: 'Tokopedia',
+      url: 'https://tokopedia.link/ubayhub-quick861dw',
+      clicks: 3420,
+      conversions: 184,
+      ctr: 12.8,
+      totalCommission: 1472000,
+      pendingCommission: 320000,
+      status: 'Active'
+    },
+    {
+      id: 'aff-02',
+      title: 'IC EEPROM Programmer RT809F Full Adapter Set',
+      marketplace: 'Shopee',
+      url: 'https://shopee.co.id/universal-rt809f-ubayhub',
+      clicks: 4890,
+      conversions: 210,
+      ctr: 9.4,
+      totalCommission: 1260000,
+      pendingCommission: 450000,
+      status: 'Active'
+    },
+    {
+      id: 'aff-03',
+      title: 'Alat Tes Backlight TV LED Digital Smart Tester',
+      marketplace: 'Tokopedia',
+      url: 'https://tokopedia.link/ubayhub-ledtester',
+      clicks: 2150,
+      conversions: 98,
+      ctr: 8.2,
+      totalCommission: 784000,
+      pendingCommission: 150000,
+      status: 'Active'
+    },
+    {
+      id: 'aff-04',
+      title: 'Fluks Solder Amtech NC-559-ASM Original 10cc',
+      marketplace: 'TikTok Shop',
+      url: 'https://vt.tiktok.com/ubayhub_amtech',
+      clicks: 5610,
+      conversions: 340,
+      ctr: 14.1,
+      totalCommission: 680000,
+      pendingCommission: 120000,
+      status: 'Active'
+    },
+    {
+      id: 'aff-05',
+      title: 'Mainboard TV Polytron LED 32 Inch Tested Good',
+      marketplace: 'Lazada',
+      url: 'https://s.lazada.co.id/s.ubayhub_polytron',
+      clicks: 1820,
+      conversions: 62,
+      ctr: 6.8,
+      totalCommission: 496000,
+      pendingCommission: 80000,
+      status: 'Active'
+    }
+  ]);
+
+  // New Stock Item Modal State
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [newStockTitle, setNewStockTitle] = useState('');
+  const [newStockCategory, setNewStockCategory] = useState('IC');
+  const [newStockQty, setNewStockQty] = useState(50);
+  const [newStockBuyPrice, setNewStockBuyPrice] = useState(10000);
+  const [newStockSellPrice, setNewStockSellPrice] = useState(20000);
+  const [newStockRack, setNewStockRack] = useState('Rak A-05');
+
+  // New Ad Banner Modal State
+  const [showAddAdModal, setShowAddAdModal] = useState(false);
+  const [newAdTitle, setNewAdTitle] = useState('');
+  const [newAdLocation, setNewAdLocation] = useState<AdPlacement>('Header Banner');
+  const [newAdTargetUrl, setNewAdTargetUrl] = useState('https://ubayhub.id/promo');
+  const [newAdImageUrl, setNewAdImageUrl] = useState('https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800');
+
+  // Filtered Stock Items
+  const filteredStock = stock.filter(
+    (s) =>
+      s.title.toLowerCase().includes(stockSearch.toLowerCase()) ||
+      s.code.toLowerCase().includes(stockSearch.toLowerCase()) ||
+      s.rackLocation.toLowerCase().includes(stockSearch.toLowerCase())
+  );
+
+  const handleCreateStock = (e: React.FormEvent) => {
+    e.preventDefault();
+    const margin = ((newStockSellPrice - newStockBuyPrice) / newStockBuyPrice) * 100;
+    const newItem: StockItem = {
+      id: 'stk-' + Date.now(),
+      code: 'SKU-' + Math.floor(1000 + Math.random() * 9000),
+      barcode: '8891' + Math.floor(10000000 + Math.random() * 90000000),
+      title: newStockTitle,
+      category: newStockCategory,
+      stockQuantity: Number(newStockQty),
+      minStockThreshold: 10,
+      buyPrice: Number(newStockBuyPrice),
+      sellPrice: Number(newStockSellPrice),
+      marginPercent: Number(margin.toFixed(1)),
+      rackLocation: newStockRack,
+      supplierName: 'PT Suplier Utama Blora',
+      lastUpdated: new Date().toISOString().split('T')[0],
+      movementsCount: 1
+    };
+
+    onUpdateStock([newItem, ...stock]);
+    setShowAddStockModal(false);
+    setNewStockTitle('');
+  };
+
+  const handleCreateAd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newAd: AdBanner = {
+      id: 'ad-' + Date.now(),
+      title: newAdTitle,
+      type: 'Image',
+      location: newAdLocation,
+      imageUrl: newAdImageUrl,
+      targetUrl: newAdTargetUrl,
+      priority: 1,
+      active: true,
+      deviceTarget: 'All',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: '2026-12-31',
+      impressions: 0,
+      clicks: 0,
+      ctr: 0
+    };
+
+    onUpdateAds([newAd, ...ads]);
+    setShowAddAdModal(false);
+    setNewAdTitle('');
+  };
+
+  const toggleAdActive = (adId: string) => {
+    const updated = ads.map((a) => (a.id === adId ? { ...a, active: !a.active } : a));
+    onUpdateAds(updated);
+  };
+
+  const handleUpdateServiceStatus = (orderId: string, newStatus: ServiceOrder['status']) => {
+    const updated = serviceOrders.map((o) => {
+      if (o.id === orderId) {
+        const newTimeline = [...o.timeline];
+        const stepIdx = newTimeline.findIndex((t) => t.status === newStatus);
+        if (stepIdx !== -1) {
+          newTimeline[stepIdx].completed = true;
+          newTimeline[stepIdx].time = new Date().toLocaleString('id-ID');
+        }
+        return { ...o, status: newStatus, timeline: newTimeline };
+      }
+      return o;
+    });
+    onUpdateServiceOrders(updated);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Top Admin Status Bar */}
+      <div className="p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <img
+            src={currentUser.avatarUrl}
+            alt={currentUser.username}
+            className="w-12 h-12 rounded-2xl border-2 border-blue-500 object-cover"
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-extrabold text-white">{currentUser.username}</h1>
+              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-600 text-white uppercase">
+                {currentUser.role}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Sesi Aktif: {currentUser.email} &bull; Login Terakhir: {currentUser.lastLogin}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={onLogout}
+          className="px-4 py-2 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-800 text-red-300 text-xs font-bold flex items-center gap-2 transition"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Keluar Sesi Admin</span>
+        </button>
+      </div>
+
+      {/* Admin Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800 text-xs font-bold">
+        <button
+          onClick={() => setAdminTab('overview')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'overview' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span>1. Overview Analytics</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('stock')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'stock' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <Box className="w-4 h-4" />
+          <span>2. Stok Barang & Rak ({stock.length})</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('services')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'services' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <Wrench className="w-4 h-4" />
+          <span>3. Order Servis ({serviceOrders.length})</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('ads')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'ads' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <Megaphone className="w-4 h-4" />
+          <span>4. Manajemen Iklan ({ads.length})</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('affiliate')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'affiliate' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <DollarSign className="w-4 h-4 text-orange-400" />
+          <span>5. Affiliate Overview ({affiliateLinks.length})</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('security')}
+          className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 shrink-0 ${
+            adminTab === 'security' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>6. Keamanan & Log Audit</span>
+        </button>
+      </div>
+
+      {/* Tab 1: Overview Analytics */}
+      {adminTab === 'overview' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-xs text-slate-500 font-bold">Total Firmware Downloads</span>
+              <div className="text-2xl font-black text-blue-600 dark:text-blue-400">14.820</div>
+              <span className="text-[10px] text-emerald-500 font-bold">+12% dari minggu lalu</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-xs text-slate-500 font-bold">Pendapatan Servis & Sparepart</span>
+              <div className="text-2xl font-black text-orange-600 dark:text-orange-400">Rp 24.850.000</div>
+              <span className="text-[10px] text-emerald-500 font-bold">Blora & Luar Kota</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-xs text-slate-500 font-bold">Order Servis Aktif</span>
+              <div className="text-2xl font-black text-emerald-500">{serviceOrders.length} Resi</div>
+              <span className="text-[10px] text-slate-400">Persetujuan pelanggan OK</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-xs text-slate-500 font-bold">Status Keamanan Portal</span>
+              <div className="text-2xl font-black text-emerald-400">SECURE</div>
+              <span className="text-[10px] text-slate-400">Argon2 / Rate Limit Active</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Stock Management */}
+      {adminTab === 'stock' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <input
+                type="text"
+                value={stockSearch}
+                onChange={(e) => setStockSearch(e.target.value)}
+                placeholder="Cari SKU / Nama Barang / Rak..."
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800"
+              />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            </div>
+
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => alert("Mengunduh Laporan Stok Excel (XLSX)...")}
+                className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold flex items-center gap-1.5"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                <span>Export Excel</span>
+              </button>
+
+              <button
+                onClick={() => setShowAddStockModal(true)}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Barang Baru</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold">
+                <tr>
+                  <th className="p-3">SKU & Barcode</th>
+                  <th className="p-3">Nama Komponen / Barang</th>
+                  <th className="p-3">Lokasi Rak</th>
+                  <th className="p-3">Stok</th>
+                  <th className="p-3">Harga Beli</th>
+                  <th className="p-3">Harga Jual</th>
+                  <th className="p-3">Margin</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {filteredStock.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-950">
+                    <td className="p-3 font-mono">
+                      <div>{item.code}</div>
+                      <div className="text-[10px] text-slate-400">{item.barcode}</div>
+                    </td>
+                    <td className="p-3 font-bold">{item.title}</td>
+                    <td className="p-3 text-orange-600 dark:text-orange-400 font-bold">{item.rackLocation}</td>
+                    <td className="p-3 font-bold">
+                      <span className={`px-2 py-0.5 rounded text-[10px] ${
+                        item.stockQuantity <= item.minStockThreshold
+                          ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 font-black'
+                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                      }`}>
+                        {item.stockQuantity} pcs
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-500">Rp {item.buyPrice.toLocaleString('id-ID')}</td>
+                    <td className="p-3 font-extrabold text-blue-600 dark:text-blue-400">Rp {item.sellPrice.toLocaleString('id-ID')}</td>
+                    <td className="p-3 font-bold text-emerald-500">+{item.marginPercent}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Service Orders Management */}
+      {adminTab === 'services' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold">
+                <tr>
+                  <th className="p-3">Resi & Tanggal</th>
+                  <th className="p-3">Pelanggan & HP</th>
+                  <th className="p-3">Perangkat / Merk</th>
+                  <th className="p-3">Status Pengerjaan</th>
+                  <th className="p-3">Biaya</th>
+                  <th className="p-3">Aksi Ubah Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {serviceOrders.map((ord) => (
+                  <tr key={ord.id} className="hover:bg-slate-50 dark:hover:bg-slate-950">
+                    <td className="p-3 font-mono font-bold text-blue-600">{ord.code}</td>
+                    <td className="p-3">
+                      <div className="font-bold">{ord.customerName}</div>
+                      <div className="text-[10px] text-slate-400">{ord.phone} ({ord.city})</div>
+                    </td>
+                    <td className="p-3 font-bold">{ord.brandModel} ({ord.deviceType})</td>
+                    <td className="p-3 font-bold text-orange-500">{ord.status}</td>
+                    <td className="p-3 font-extrabold">Rp {ord.estimatedCost.toLocaleString('id-ID')}</td>
+                    <td className="p-3">
+                      <select
+                        value={ord.status}
+                        onChange={(e: any) => handleUpdateServiceStatus(ord.id, e.target.value)}
+                        className="p-1.5 text-xs rounded bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold"
+                      >
+                        <option value="Diterima">Diterima</option>
+                        <option value="Pemeriksaan / Diagnosa">Pemeriksaan / Diagnosa</option>
+                        <option value="Menunggu Sparepart">Menunggu Sparepart</option>
+                        <option value="Dalam Pengerjaan">Dalam Pengerjaan</option>
+                        <option value="Testing & QC">Testing & QC</option>
+                        <option value="Selesai & Siap Ambil / Kirim">Selesai & Siap Ambil / Kirim</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Ad Management System */}
+      {adminTab === 'ads' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+              Manajemen Iklan & Banner Placements UbayHub
+            </h3>
+            <button
+              onClick={() => setShowAddAdModal(true)}
+              className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Pasang Banner Iklan Baru</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ads.map((ad) => (
+              <div
+                key={ad.id}
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 uppercase">
+                    {ad.location}
+                  </span>
+                  <button
+                    onClick={() => toggleAdActive(ad.id)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      ad.active ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                    }`}
+                  >
+                    {ad.active ? 'TAYANG' : 'DIPAUSE'}
+                  </button>
+                </div>
+
+                <h4 className="font-extrabold text-xs text-slate-900 dark:text-white line-clamp-1">
+                  {ad.title}
+                </h4>
+
+                <div className="grid grid-cols-3 gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950 text-[10px] text-center border border-slate-200/50 dark:border-slate-800">
+                  <div>Tayang: <strong>{ad.impressions}</strong></div>
+                  <div>Klik: <strong>{ad.clicks}</strong></div>
+                  <div>CTR: <strong className="text-emerald-500">{ad.ctr}%</strong></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: Affiliate Overview Section */}
+      {adminTab === 'affiliate' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Top Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-bold">Total Komisi Cair</span>
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-emerald-500">
+                Rp {affiliateLinks.reduce((acc, a) => acc + a.totalCommission, 0).toLocaleString('id-ID')}
+              </div>
+              <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                <span>Terintegrasi Tokopedia, Shopee & TikTok</span>
+              </span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-bold">Komisi Pending</span>
+                <div className="p-2 rounded-xl bg-orange-500/10 text-orange-500">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-orange-500">
+                Rp {affiliateLinks.reduce((acc, a) => acc + a.pendingCommission, 0).toLocaleString('id-ID')}
+              </div>
+              <span className="text-[10px] text-slate-400">Proses kliring marketplace (7-14 hari)</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-bold">Total Klik Affiliate</span>
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+                  <MousePointer className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                {affiliateLinks.reduce((acc, a) => acc + a.clicks, 0).toLocaleString('id-ID')} Klik
+              </div>
+              <span className="text-[10px] text-slate-400">Trafik dari Web UbayHub & Artikel</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-bold">Rata-Rata CTR Conversions</span>
+                <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500">
+                  <Percent className="w-5 h-5" />
+                </div>
+              </div>
+              <div className="text-2xl font-black text-purple-600 dark:text-purple-400">
+                {(
+                  affiliateLinks.reduce((acc, a) => acc + a.ctr, 0) / affiliateLinks.length
+                ).toFixed(1)}%
+              </div>
+              <span className="text-[10px] text-emerald-500 font-bold">+2.4% di atas rata-rata industri</span>
+            </div>
+          </div>
+
+          {/* Marketplace Account Integration Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-900/80 to-slate-900 text-white border border-emerald-800/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-emerald-400">Tokopedia Affiliate</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-500 text-slate-950">CONNECTED</span>
+              </div>
+              <div className="text-xs font-bold">Komisi Terkumpul: Rp 2.256.000</div>
+              <div className="text-[10px] text-slate-300">Skema Komisi: hingga 10% per transaksi</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-900/80 to-slate-900 text-white border border-orange-800/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-orange-400">Shopee Affiliate</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-orange-500 text-white">CONNECTED</span>
+              </div>
+              <div className="text-xs font-bold">Komisi Terkumpul: Rp 1.710.000</div>
+              <div className="text-[10px] text-slate-300">Skema Komisi: hingga 8% Komisi Extra</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-slate-200">TikTok Shop Creator</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-purple-600 text-white">CONNECTED</span>
+              </div>
+              <div className="text-xs font-bold">Komisi Terkumpul: Rp 800.000</div>
+              <div className="text-[10px] text-slate-300">Skema Komisi: hingga 12% Komisi Video</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-900/80 to-slate-900 text-white border border-blue-800/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-blue-400">Lazada Affiliate</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-blue-500 text-white">CONNECTED</span>
+              </div>
+              <div className="text-xs font-bold">Komisi Terkumpul: Rp 576.000</div>
+              <div className="text-[10px] text-slate-300">Skema Komisi: hingga 7% Komisi Produk</div>
+            </div>
+          </div>
+
+          {/* Top Performing Affiliate Links Table */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-orange-500" />
+                  <span>Top-Performing Affiliate Links & Performa CTR</span>
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Daftar link rekomendasi sparepart & peralatan teknisi berkinerja tertinggi.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  const newTitle = prompt("Masukkan Judul Produk Affiliate:");
+                  if (!newTitle) return;
+                  const newUrl = prompt("Masukkan URL Affiliate Link:");
+                  if (!newUrl) return;
+                  const newMarketplace = prompt("Marketplace (Tokopedia/Shopee/TikTok Shop/Lazada):") || "Tokopedia";
+
+                  const newLink = {
+                    id: 'aff-' + Date.now(),
+                    title: newTitle,
+                    marketplace: newMarketplace,
+                    url: newUrl,
+                    clicks: 0,
+                    conversions: 0,
+                    ctr: 0.0,
+                    totalCommission: 0,
+                    pendingCommission: 0,
+                    status: 'Active'
+                  };
+
+                  setAffiliateLinks([newLink, ...affiliateLinks]);
+                }}
+                className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Link Affiliate Baru</span>
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold">
+                  <tr>
+                    <th className="p-3">Produk & Marketplace</th>
+                    <th className="p-3">Link Affiliate</th>
+                    <th className="p-3">Total Klik</th>
+                    <th className="p-3">Konversi</th>
+                    <th className="p-3">CTR %</th>
+                    <th className="p-3">Komisi Cair</th>
+                    <th className="p-3">Komisi Pending</th>
+                    <th className="p-3">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                  {affiliateLinks.map((link) => (
+                    <tr key={link.id} className="hover:bg-slate-50 dark:hover:bg-slate-950">
+                      <td className="p-3">
+                        <div className="font-bold text-slate-900 dark:text-white line-clamp-1">{link.title}</div>
+                        <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase mt-0.5 ${
+                          link.marketplace === 'Tokopedia'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : link.marketplace === 'Shopee'
+                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
+                            : link.marketplace === 'TikTok Shop'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                        }`}>
+                          {link.marketplace}
+                        </span>
+                      </td>
+
+                      <td className="p-3 font-mono">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 truncate max-w-[150px]">{link.url}</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(link.url);
+                              setCopiedLink(link.id);
+                              setTimeout(() => setCopiedLink(null), 2000);
+                            }}
+                            className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-white"
+                            title="Salin Link"
+                          >
+                            {copiedLink === link.id ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="p-3 font-bold text-slate-900 dark:text-white">{link.clicks.toLocaleString('id-ID')}</td>
+                      <td className="p-3 font-bold text-emerald-500">{link.conversions} order</td>
+                      <td className="p-3 font-bold text-blue-600 dark:text-blue-400">{link.ctr}%</td>
+                      <td className="p-3 font-extrabold text-emerald-500">
+                        Rp {link.totalCommission.toLocaleString('id-ID')}
+                      </td>
+                      <td className="p-3 font-bold text-orange-500">
+                        Rp {link.pendingCommission.toLocaleString('id-ID')}
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => {
+                            setAffiliateLinks(affiliateLinks.filter((a) => a.id !== link.id));
+                          }}
+                          className="p-1 rounded text-red-500 hover:bg-red-500/10"
+                          title="Hapus Link"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+      {adminTab === 'security' && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
+            <h3 className="font-extrabold text-sm flex items-center gap-2">
+              <Lock className="w-4 h-4 text-emerald-400" />
+              <span>Sistem Keamanan Argon2 + Rate Limiter UbayHub</span>
+            </h3>
+            <p className="text-xs text-slate-300">
+              Setiap sesi admin diverifikasi dengan JWT token. Upaya brute force diblokir secara otomatis oleh WAF Firewall.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold">
+                <tr>
+                  <th className="p-3">Waktu</th>
+                  <th className="p-3">User</th>
+                  <th className="p-3">Aktivitas System</th>
+                  <th className="p-3">IP Address</th>
+                  <th className="p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {auditLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-950">
+                    <td className="p-3 font-mono text-slate-400">{log.timestamp}</td>
+                    <td className="p-3 font-bold">{log.username}</td>
+                    <td className="p-3">{log.action}</td>
+                    <td className="p-3 font-mono">{log.ipAddress}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                        log.status === 'Success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {log.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Add Stock */}
+      {showAddStockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 text-xs space-y-4">
+            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Tambah Komponen Stok Baru</h3>
+            <form onSubmit={handleCreateStock} className="space-y-3">
+              <div>
+                <label className="block font-bold mb-1">Nama Barang / IC</label>
+                <input
+                  type="text"
+                  required
+                  value={newStockTitle}
+                  onChange={(e) => setNewStockTitle(e.target.value)}
+                  placeholder="Contoh: IC EEPROM 25Q64 SOP8"
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold mb-1">Stok Awal</label>
+                  <input
+                    type="number"
+                    value={newStockQty}
+                    onChange={(e) => setNewStockQty(Number(e.target.value))}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Lokasi Rak</label>
+                  <input
+                    type="text"
+                    value={newStockRack}
+                    onChange={(e) => setNewStockRack(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold mb-1">Harga Beli (Rp)</label>
+                  <input
+                    type="number"
+                    value={newStockBuyPrice}
+                    onChange={(e) => setNewStockBuyPrice(Number(e.target.value))}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Harga Jual (Rp)</label>
+                  <input
+                    type="number"
+                    value={newStockSellPrice}
+                    onChange={(e) => setNewStockSellPrice(Number(e.target.value))}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddStockModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow"
+                >
+                  Simpan Barang
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Add Ad Banner */}
+      {showAddAdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 text-xs space-y-4">
+            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Pasang Banner Iklan Baru</h3>
+            <form onSubmit={handleCreateAd} className="space-y-3">
+              <div>
+                <label className="block font-bold mb-1">Judul / Kampanye Iklan</label>
+                <input
+                  type="text"
+                  required
+                  value={newAdTitle}
+                  onChange={(e) => setNewAdTitle(e.target.value)}
+                  placeholder="Contoh: Diskon Sparepart LED Blora"
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Lokasi Placement</label>
+                <select
+                  value={newAdLocation}
+                  onChange={(e: any) => setNewAdLocation(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold"
+                >
+                  <option value="Header Banner">Header Banner</option>
+                  <option value="Homepage Banner">Homepage Banner</option>
+                  <option value="Sidebar Kanan">Sidebar Kanan</option>
+                  <option value="Sticky Bottom">Sticky Bottom</option>
+                  <option value="Popup">Popup</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Target URL Link</label>
+                <input
+                  type="text"
+                  value={newAdTargetUrl}
+                  onChange={(e) => setNewAdTargetUrl(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAdModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold shadow"
+                >
+                  Tayangkan Iklan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

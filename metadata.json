@@ -1,0 +1,6 @@
+{
+  "name": "UbayHub",
+  "description": "Toko Elektronik Online & Offline Terlengkap di Blora - Portal Service, Firmware, Sparepart, Komunitas & Marketplace",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
